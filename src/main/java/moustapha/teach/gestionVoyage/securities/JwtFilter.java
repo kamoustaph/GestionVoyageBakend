@@ -84,11 +84,14 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private boolean isPublicEndpoint(String uri) {
-        return uri.startsWith("/api/utilisateurs/inscription") ||
+        return  uri.startsWith("/api/roles") ||
+                uri.startsWith("/api/utilisateurs/inscription") ||
                 uri.startsWith("/api/utilisateurs/connexion") ||
                 uri.startsWith("/api/utilisateurs/activation") ||
                 uri.startsWith("/api-docs") ||
                 uri.startsWith("/swagger-ui") ||
+                uri.startsWith("/oauth2") ||
+                uri.startsWith("/login/oauth2") ||
                 uri.equals("/error");
     }
 }

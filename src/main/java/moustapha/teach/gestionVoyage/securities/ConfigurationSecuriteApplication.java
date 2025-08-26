@@ -1,13 +1,11 @@
 package moustapha.teach.gestionVoyage.securities;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import moustapha.teach.gestionVoyage.config.OAuth2AuthenticationFailureHandler;
 import moustapha.teach.gestionVoyage.config.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -28,6 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 @Configuration
@@ -38,6 +37,7 @@ public class ConfigurationSecuriteApplication {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtFilter jwtFilter;
     private final UserDetailsService userDetailsService;
+
     @Lazy
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
@@ -50,11 +50,12 @@ public class ConfigurationSecuriteApplication {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(POST, "/api/utilisateurs/inscription").permitAll()
-                        .requestMatchers(POST, "/api/utilisateurs/activation").permitAll()
-                        .requestMatchers(POST, "/api/utilisateurs/connexion").permitAll()
+                        // Autoriser tous les HTTP methods pour les endpoints publics
+                        .requestMatchers("/api/roles/**").permitAll() // ← GET, POST, PUT, DELETE, etc.
+                        .requestMatchers("/api/utilisateurs/inscription").permitAll()
+                        .requestMatchers("/api/utilisateurs/activation").permitAll()
+                        .requestMatchers("/api/utilisateurs/connexion").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/roles/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -73,10 +74,11 @@ public class ConfigurationSecuriteApplication {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://127.0.0.1:4200","http://localhost:4200", "http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -95,12 +97,4 @@ public class ConfigurationSecuriteApplication {
         daoAuthenticationProvider.setPasswordEncoder(bCryptPasswordEncoder);
         return daoAuthenticationProvider;
     }
-
-//    @Bean
-//    public Jackson2ObjectMapperBuilder jacksonBuilder() {
-//        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-//        builder.featuresToEnable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
-//        builder.featuresToDisable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-//        return builder;
-//    }
 }
