@@ -107,4 +107,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r LEFT JOIN FETCH r.user LEFT JOIN FETCH r.voyage WHERE r.id = :id")
     Optional<Reservation> findWithDetailsById(@Param("id") Long id);
+
+    @Query("""
+    SELECT r FROM Reservation r WHERE 
+    LOWER(r.user.username) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    LOWER(r.voyage.lieuDepart) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    LOWER(r.voyage.lieuArrivee) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    LOWER(r.statut) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    CAST(r.nombrePlaces AS string) LIKE CONCAT('%', :query, '%') OR
+    CAST(r.id AS string) LIKE CONCAT('%', :query, '%')
+    """)
+    Page<Reservation> findByGlobalSearch(@Param("query") String query, Pageable pageable);
 }

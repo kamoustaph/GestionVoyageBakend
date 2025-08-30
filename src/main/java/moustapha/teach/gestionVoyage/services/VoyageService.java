@@ -44,4 +44,6 @@ public interface VoyageService {
     Long getTotalVoyages();
     Long getVoyagesByStatutCount(StatutVoyage statut);
     Long getAvailableVoyagesCount();
+
+    Page<VoyageDto> searchGlobal(String query, Pageable pageable);
 }

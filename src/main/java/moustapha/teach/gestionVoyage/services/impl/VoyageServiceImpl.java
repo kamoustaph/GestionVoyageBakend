@@ -295,4 +295,10 @@ public class VoyageServiceImpl implements VoyageService {
     }
 
 
+
+    @Override
+    public Page<VoyageDto> searchGlobal(String query, Pageable pageable) {
+        return voyageRepository.findByGlobalSearch(query, pageable)
+                .map(voyageMapper::toDto);
+    }
 }

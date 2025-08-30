@@ -601,4 +601,20 @@ public class ReservationController {
         Long count = reservationService.getReservationsByVoyageIdCount(voyageId);
         return ResponseEntity.ok(count);
     }
+
+    @GetMapping("/search/global")
+    @Operation(
+            summary = "Recherche globale de réservations",
+            description = "Recherche dans tous les champs des réservations"
+    )
+    @ApiResponse(responseCode = "200", description = "Réservations trouvées")
+    public ResponseEntity<Page<ReservationDto>> searchGlobal(
+            @Parameter(description = "Terme de recherche", required = true) @RequestParam String query,
+            @Parameter(description = "Numéro de page (0-based)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Taille de la page", example = "10") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReservationDto> reservations = reservationService.searchGlobal(query, pageable);
+        return ResponseEntity.ok(reservations);
+    }
 }

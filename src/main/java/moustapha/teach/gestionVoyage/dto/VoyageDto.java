@@ -1,9 +1,11 @@
 package moustapha.teach.gestionVoyage.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import moustapha.teach.gestionVoyage.config.JacksonConfig;
 import moustapha.teach.gestionVoyage.enums.StatutVoyage;
 
 import java.math.BigDecimal;
@@ -17,12 +19,14 @@ public class VoyageDto {
     private String lieuDepart;
     private String lieuArrivee;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonDeserialize(using = JacksonConfig.CustomLocalDateTimeDeserializer.class)
     private LocalDateTime dateDepart;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime dateRetour;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonDeserialize(using = JacksonConfig.CustomLocalDateTimeDeserializer.class)
 
+    private LocalDateTime dateRetour;
     private BigDecimal prix;
     private Integer placesDisponibles;
     private Integer placesTotal;

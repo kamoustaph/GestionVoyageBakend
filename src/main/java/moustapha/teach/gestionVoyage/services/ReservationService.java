@@ -49,4 +49,6 @@ public interface ReservationService {
     Long getReservationsByVoyageIdCount(Long voyageId);
 
     Optional<ReservationDetailDto> getReservationDetail(Long id);
+
+    Page<ReservationDto> searchGlobal(String query, Pageable pageable);
 }
