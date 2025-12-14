@@ -13,7 +13,8 @@ public class UserRegistrationDTO {
     private String phone;
     private String password;
     private String photoProfil;
-    private String roleName; // Gardé comme String pour la réception des requêtes
+    private String roleName;
+    private Boolean actif;
 
     public UserRegistrationDTO() {
     }

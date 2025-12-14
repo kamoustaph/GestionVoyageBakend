@@ -30,7 +30,7 @@ public class User implements Serializable , UserDetails {
     private String username;
 
     @NotBlank(message = "Le nom est obligatoire")
-    @Size(max = 80, message = "Le nom ne doit pas dépasser 120 caractères")
+    @Size(max = 80, message = "Le nom ne doit pas dépasser 80 caractères")
     private String name;
 
     @NotBlank(message = "Le téléphone est obligatoire")

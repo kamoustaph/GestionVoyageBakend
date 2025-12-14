@@ -43,4 +43,8 @@ public class Paiement {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(name = "paydunya_token")
+    private String paydunyaToken;
+
 }

@@ -19,10 +19,8 @@ public class PaiementDto {
     private BigDecimal montant;
     private MethodePaiement methode;
     private StatutPaiement statut;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime datePaiement;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 }

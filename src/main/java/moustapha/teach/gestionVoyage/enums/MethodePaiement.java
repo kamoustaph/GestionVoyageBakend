@@ -4,5 +4,8 @@ public enum MethodePaiement {
     CREDIT_CARD,
     WAVE,
     ORANGE_MONEY,
-    PAYPAL;
+    PAYPAL,
+    FREE_MONEY,
+    WIZALL,
+    E_MONEY;
 }
