@@ -104,4 +104,14 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
 
     @Query("SELECT COUNT(v) FROM Voyage v WHERE v.placesDisponibles > 0 AND v.statut = 'ACTIF'")
     Long countAvailableVoyages();
+    @Query("""
+    SELECT v FROM Voyage v WHERE 
+    LOWER(v.lieuDepart) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    LOWER(v.lieuArrivee) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    LOWER(CAST(v.statut AS string)) LIKE LOWER(CONCAT('%', :query, '%')) OR
+    CAST(v.prix AS string) LIKE CONCAT('%', :query, '%') OR
+    CAST(v.placesDisponibles AS string) LIKE CONCAT('%', :query, '%') OR
+    CAST(v.placesTotal AS string) LIKE CONCAT('%', :query, '%')
+    """)
+    Page<Voyage> findByGlobalSearch(@Param("query") String query, Pageable pageable);
 }

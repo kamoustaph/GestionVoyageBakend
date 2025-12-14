@@ -1,9 +1,10 @@
 package moustapha.teach.gestionVoyage.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import moustapha.teach.gestionVoyage.config.JacksonConfig;
 import moustapha.teach.gestionVoyage.enums.StatutVoyage;
 
 import jakarta.validation.constraints.*;
@@ -15,6 +16,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class VoyageCreateDto {
 
+    private Long id;
+
     @NotBlank(message = "Le lieu de départ est obligatoire")
     private String lieuDepart;
 
@@ -23,11 +26,11 @@ public class VoyageCreateDto {
 
     @NotNull(message = "La date de départ est obligatoire")
     @Future(message = "La date de départ doit être future")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonDeserialize(using = JacksonConfig.CustomLocalDateTimeDeserializer.class)
     private LocalDateTime dateDepart;
 
     @NotNull(message = "La date de retour est obligatoire")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonDeserialize(using = JacksonConfig.CustomLocalDateTimeDeserializer.class)
     private LocalDateTime dateRetour;
 
     @NotNull(message = "Le prix est obligatoire")

@@ -3,7 +3,6 @@ package moustapha.teach.gestionVoyage.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import moustapha.teach.gestionVoyage.dto.*;
@@ -24,18 +23,20 @@ import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 
 @RestController
 @RequestMapping("/api/paiements")
-@RequiredArgsConstructor
+
 @Validated
 @CrossOrigin(origins = "*")
 @Tag(name = "Paiements", description = "API de gestion des paiements")
 public class PaiementController {
 
     private final PaiementService paiementService;
+    public PaiementController(final PaiementService paiementService){
+        this.paiementService = paiementService;
+    }
 
     @GetMapping
     @Operation(summary = "Obtenir tous les paiements", description = "Retourne la liste de tous les paiements")
@@ -131,8 +132,6 @@ public class PaiementController {
         }
         return ResponseEntity.notFound().build();
     }
-
-    // NOUVELLES MÉTHODES AVEC PAGINATION
 
     @GetMapping("/paginated")
     @Operation(summary = "Obtenir tous les paiements (paginated)", description = "Retourne la liste paginée de tous les paiements")

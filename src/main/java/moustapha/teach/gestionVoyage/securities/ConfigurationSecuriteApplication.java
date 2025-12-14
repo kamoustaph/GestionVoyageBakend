@@ -28,8 +28,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.springframework.http.HttpMethod.POST;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -38,6 +36,7 @@ public class ConfigurationSecuriteApplication {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtFilter jwtFilter;
     private final UserDetailsService userDetailsService;
+
     @Lazy
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
@@ -50,21 +49,44 @@ public class ConfigurationSecuriteApplication {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(POST, "/api/utilisateurs/inscription").permitAll()
-                        .requestMatchers(POST, "/api/utilisateurs/activation").permitAll()
-                        .requestMatchers(POST, "/api/utilisateurs/connexion").permitAll()
-                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/roles/**").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers(
+                                "/api/roles/**",
+                                "/api/utilisateurs/inscription",
+                                "/api/utilisateurs/activation",
+                                "/api/utilisateurs/connexion",
+                                "/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
+                                "/api/voyages/**",
+                                "/api/tickets/**",
+                                "/api/reservations/**"
+
+
+
+                                ).permitAll()
+
+                        .requestMatchers("/api/voyages/**").hasAnyAuthority( "ROLE_ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                // DÉSACTIVEZ TEMPORAIREMENT OAUTH2 POUR LES TESTS
+                /*
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
+                        .authorizationEndpoint(authorization -> authorization
+                            .baseUri("/oauth2/authorization")
+                        )
+                        .redirectionEndpoint(redirection -> redirection
+                            .baseUri("/login/oauth2/code/*")
+                        )
                 )
+                */
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -72,11 +94,31 @@ public class ConfigurationSecuriteApplication {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://127.0.0.1:4200","http://localhost:4200", "http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedOrigins(List.of(
+                "http://127.0.0.1:4200",
+                "http://localhost:4200",
+                "http://localhost:3000"
+        ));
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
+        ));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+        ));
+        configuration.setExposedHeaders(List.of(
+                "Authorization",
+                "Content-Disposition",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"
+        ));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -96,11 +138,4 @@ public class ConfigurationSecuriteApplication {
         return daoAuthenticationProvider;
     }
 
-//    @Bean
-//    public Jackson2ObjectMapperBuilder jacksonBuilder() {
-//        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-//        builder.featuresToEnable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
-//        builder.featuresToDisable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-//        return builder;
-//    }
 }

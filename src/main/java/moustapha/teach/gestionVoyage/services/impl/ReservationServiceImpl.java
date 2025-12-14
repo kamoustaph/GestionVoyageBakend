@@ -15,7 +15,6 @@ import moustapha.teach.gestionVoyage.repositories.UserRepository;
 import moustapha.teach.gestionVoyage.repositories.VoyageRepository;
 import moustapha.teach.gestionVoyage.enums.ReservationStatus;
 import moustapha.teach.gestionVoyage.services.ReservationService;
-import moustapha.teach.gestionVoyage.dto.ReservationDetailDto;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -101,8 +100,8 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public ReservationDto createReservation(ReservationCreateDto reservationCreateDto) {
-        log.info("Création d'une nouvelle réservation pour l'utilisateur {} et le voyage {}",
-                reservationCreateDto.getUserId(), reservationCreateDto.getVoyageId());
+        log.info("Création d'une nouvelle réservation pour l'utilisateur {} et le voyage {} avec {} places",
+                reservationCreateDto.getUserId(), reservationCreateDto.getVoyageId(), reservationCreateDto.getNombrePlaces());
 
         User user = userRepository.findById(reservationCreateDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
@@ -111,8 +110,8 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new RuntimeException("Voyage non trouvé"));
 
         // Vérifier la disponibilité
-        if (voyage.getPlacesDisponibles() <= 0) {
-            throw new RuntimeException("Aucune place disponible pour ce voyage");
+        if (voyage.getPlacesDisponibles() < reservationCreateDto.getNombrePlaces()) {
+            throw new RuntimeException("Places insuffisantes pour ce voyage. Disponible: " + voyage.getPlacesDisponibles() + ", Demandé: " + reservationCreateDto.getNombrePlaces());
         }
 
         // Vérifier qu'il n'existe pas déjà une réservation active pour ce user/voyage
@@ -127,14 +126,15 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setVoyage(voyage);
         reservation.setStatut(ReservationStatus.PENDING);
         reservation.setDateReservation(LocalDateTime.now());
-        reservation.setDateExpiration(LocalDateTime.now().plusHours(24)); // 24h pour finaliser
+        reservation.setDateExpiration(LocalDateTime.now().plusHours(24));
+        reservation.setNombrePlaces(reservationCreateDto.getNombrePlaces()); // ← CORRECTION ICI
 
         // Décrémenter les places disponibles
-        voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() - 1);
+        voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() - reservationCreateDto.getNombrePlaces()); // ← CORRECTION ICI
         voyageRepository.save(voyage);
 
         Reservation savedReservation = reservationRepository.save(reservation);
-        log.info("Réservation créée avec l'ID {}", savedReservation.getId());
+        log.info("Réservation créée avec l'ID {} pour {} places", savedReservation.getId(), savedReservation.getNombrePlaces());
 
         return reservationMapper.toDto(savedReservation);
     }
@@ -150,7 +150,7 @@ public class ReservationServiceImpl implements ReservationService {
                     if (nouveauStatut == ReservationStatus.CANCELLED &&
                             (ancienStatut == ReservationStatus.PENDING || ancienStatut == ReservationStatus.CONFIRMED)) {
                         Voyage voyage = reservation.getVoyage();
-                        voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + 1);
+                        voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + reservation.getNombrePlaces()); // ← CORRECTION ICI
                         voyageRepository.save(voyage);
                     }
 
@@ -162,11 +162,12 @@ public class ReservationServiceImpl implements ReservationService {
     public boolean deleteReservation(Long id) {
         Optional<Reservation> reservation = reservationRepository.findById(id);
         if (reservation.isPresent()) {
+            Reservation res = reservation.get();
             // Libérer la place si la réservation était active
-            if (reservation.get().getStatut() == ReservationStatus.PENDING ||
-                    reservation.get().getStatut() == ReservationStatus.CONFIRMED) {
-                Voyage voyage = reservation.get().getVoyage();
-                voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + 1);
+            if (res.getStatut() == ReservationStatus.PENDING ||
+                    res.getStatut() == ReservationStatus.CONFIRMED) {
+                Voyage voyage = res.getVoyage();
+                voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + res.getNombrePlaces()); // ← CORRECTION ICI
                 voyageRepository.save(voyage);
             }
             reservationRepository.deleteById(id);
@@ -207,7 +208,7 @@ public class ReservationServiceImpl implements ReservationService {
             reservation.setStatut(ReservationStatus.CANCELLED);
             // Libérer la place
             Voyage voyage = reservation.getVoyage();
-            voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + 1);
+            voyage.setPlacesDisponibles(voyage.getPlacesDisponibles() + reservation.getNombrePlaces()); // ← CORRECTION ICI
             voyageRepository.save(voyage);
             reservationRepository.save(reservation);
         }
@@ -335,13 +336,19 @@ public class ReservationServiceImpl implements ReservationService {
     public Optional<ReservationDetailDto> getReservationDetail(Long id) {
         return reservationRepository.findWithDetailsById(id)
                 .map(reservation -> {
-        if (reservation.getUser() != null) {
-            reservation.getUser().getUsername();
-        }
-        if (reservation.getVoyage() != null) {
-            reservation.getVoyage().getLieuDepart();
-        }
-        return reservationMapper.toDetailDto(reservation);
-    });
+                    if (reservation.getUser() != null) {
+                        reservation.getUser().getUsername();
+                    }
+                    if (reservation.getVoyage() != null) {
+                        reservation.getVoyage().getLieuDepart();
+                    }
+                    return reservationMapper.toDetailDto(reservation);
+                });
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReservationDto> searchGlobal(String query, Pageable pageable) {
+        return reservationRepository.findByGlobalSearch(query, pageable)
+                .map(reservationMapper::toDto);
     }
 }

@@ -407,6 +407,17 @@ public class VoyageController {
         return ResponseEntity.ok(count);
     }
 
+    @GetMapping("/search/global")
+    @Operation(summary = "Recherche globale", description = "Recherche dans tous les champs des voyages")
+    @ApiResponse(responseCode = "200", description = "Voyages trouvés")
+    public ResponseEntity<Page<VoyageDto>> searchGlobal(
+            @Parameter(description = "Terme de recherche", required = true) @RequestParam String query,
+            @Parameter(description = "Numéro de page") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Taille de la page") @RequestParam(defaultValue = "10") int size) {
 
+        Pageable pageable = PageRequest.of(page, size);
+        Page<VoyageDto> voyagesPage = voyageService.searchGlobal(query, pageable);
+        return ResponseEntity.ok(voyagesPage);
+    }
 
 }

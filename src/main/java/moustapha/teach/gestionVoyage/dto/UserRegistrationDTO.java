@@ -1,64 +1,30 @@
 package moustapha.teach.gestionVoyage.dto;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import moustapha.teach.gestionVoyage.enums.RoleType;
 
+@Setter
+@Getter
 public class UserRegistrationDTO {
     private String username;
     private String name;
     private String phone;
     private String password;
-    private String roleName; // Gardé comme String pour la réception des requêtes
+    private String photoProfil;
+    private String roleName;
+    private Boolean actif;
 
     public UserRegistrationDTO() {
     }
 
-    public UserRegistrationDTO(String username, String name, String phone, String password, String roleName) {
+    public UserRegistrationDTO(String username, String name, String phone, String password, String photoProfil, String roleName) {
         this.username = username;
         this.name = name;
         this.phone = phone;
         this.password = password;
-        this.roleName = roleName;
-    }
-
-    // Getters et Setters standards
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRoleName() {
-        return roleName;
-    }
-
-    public void setRoleName(String roleName) {
+        this.photoProfil = photoProfil;
         this.roleName = roleName;
     }
 
