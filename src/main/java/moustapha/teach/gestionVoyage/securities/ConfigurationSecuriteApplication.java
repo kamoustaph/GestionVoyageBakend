@@ -55,6 +55,8 @@ public class ConfigurationSecuriteApplication {
                                 "/api/utilisateurs/activation",
                                 "/api/utilisateurs/connexion",
                                 "/api-docs/**",
+                                 "/actuator/health",
+                               "/actuator/info",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/oauth2/**",
