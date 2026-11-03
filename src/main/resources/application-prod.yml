@@ -1,0 +1,33 @@
+# Profil production (SPRING_PROFILES_ACTIVE=prod) : base MySQL sur Amazon RDS.
+# Toutes les valeurs sensibles viennent de l'environnement ; aucune valeur par défaut pour les secrets.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  qr:
+    secret: ${QR_SECRET}
+  demo:
+    enabled: ${DEMO_DATA:false}
+
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+
+logging:
+  level:
+    root: INFO
