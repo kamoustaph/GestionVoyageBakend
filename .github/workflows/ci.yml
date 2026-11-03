@@ -1,20 +1,30 @@
-# Intégration continue du backend :
-# - à chaque pull request et push sur main : compilation + tests (H2 en mémoire) ;
-# - sur main : construction de l'image Docker et publication sur GitHub Container Registry (ghcr.io).
+# Intégration et livraison continues du backend (API Spring Boot).
+#
+# - Pull request et push sur main : compilation + tests (H2 en mémoire).
+# - Push sur main (ou lancement manuel) : image Docker publiée dans Amazon ECR
+#   avec deux tags : le SHA du commit et "latest".
+#
+# Authentification AWS par OIDC : aucune clé d'accès stockée dans GitHub.
+# Secret requis : AWS_DEPLOY_ROLE_ARN (rôle yoon-app-deploy-role, créé dans
+# le bootstrap du dépôt pki-aws-terraform-rendezvous).
 name: Backend CI
 
 on:
   pull_request:
   push:
-    branches: [main, mai]
+    branches: [main]
+  workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
+env:
+  AWS_REGION: eu-west-3
+  ECR_REPOSITORY: gestion-voyage-api
 
 jobs:
   test:
+    name: Tests
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -26,24 +36,52 @@ jobs:
         run: mvn -B verify
 
   image:
+    name: Image vers ECR
     needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/mai')
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write   # nécessaire pour obtenir le jeton OIDC
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+
+      - name: Connexion à AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Connexion à ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Nom de l'image
+        id: meta
+        run: echo "image=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v3
-      - name: Construire et publier l'image
+
+      - name: Construire et publier
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/gestion-voyage-api:latest
-            ghcr.io/${{ github.repository_owner }}/gestion-voyage-api:${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Résumé
+        run: |
+          {
+            echo "### Image publiée"
+            echo ""
+            echo "| Tag | Image |"
+            echo "|---|---|"
+            echo "| commit | \`${{ steps.meta.outputs.image }}:${{ github.sha }}\` |"
+            echo "| latest | \`${{ steps.meta.outputs.image }}:latest\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
