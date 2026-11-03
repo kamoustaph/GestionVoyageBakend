@@ -1,38 +1,50 @@
+# Pile complète en local : MySQL + API Spring + frontend Angular (nginx).
+# Les deux dépôts doivent être clonés côte à côte :
+#   ./GestionVoyageBakend   et   ./GestionVoyageFrontend
+# Lancement : cp .env.example .env && docker compose up --build
+# Application : http://localhost:8080   API : http://localhost:8093/swagger-ui.html (si SWAGGER_ENABLED=true)
 services:
-  mysql-db:
-    image: mysql:8.0
-    container_name: gestionvoyage-mysql
-    init: true
+  mysql:
+    image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: 771577089
-      MYSQL_DATABASE: gestionVoyage
-    ports:
-      - "3307:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?définir MYSQL_ROOT_PASSWORD dans .env}
+      MYSQL_DATABASE: gestion_voyage
+      MYSQL_USER: yoon
+      MYSQL_PASSWORD: ${DB_PASSWORD:?définir DB_PASSWORD dans .env}
+      TZ: UTC
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 10
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: gestionvoyage-mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    volumes:
-      - mailhog_data:/maildir
-
-  spring-app:
+  api:
     build: .
-    container_name: gestionvoyage-spring
     depends_on:
-      - mysql-db
+      mysql:
+        condition: service_healthy
     environment:
-      SERVER_PORT: 8093
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/gestion_voyage?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: yoon
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?définir JWT_SECRET dans .env}
+      QR_SECRET: ${QR_SECRET:?définir QR_SECRET dans .env}
+      CORS_ALLOWED_ORIGINS: http://localhost:8080
+      DEMO_DATA: ${DEMO_DATA:-true}
+      SWAGGER_ENABLED: "true"
     ports:
-      - "8094:8093"
-    volumes:
-      - app_logs:/app/logs
+      - "8093:8093"
+
+  web:
+    build: ../GestionVoyageFrontend
+    depends_on:
+      - api
+    environment:
+      API_UPSTREAM: http://api:8093
+    ports:
+      - "8080:80"
 
 volumes:
   mysql_data:
-  mailhog_data:
-  app_logs:

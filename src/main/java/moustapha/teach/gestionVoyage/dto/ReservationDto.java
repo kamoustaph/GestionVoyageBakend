@@ -1,28 +1,11 @@
 package moustapha.teach.gestionVoyage.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import moustapha.teach.gestionVoyage.enums.ReservationStatus;
+import moustapha.teach.gestionVoyage.domain.StatutReservation;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ReservationDto {
-    private Long id;
-    private Long userId;
-    private String userEmail;
-    private Long voyageId;
-    private String voyageLieuDepart;
-    private String voyageLieuArrivee;
-    private ReservationStatus statut;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime dateReservation;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime dateExpiration;
+public record ReservationDto(Long id, String reference, StatutReservation statut, int nombrePlaces, int montantTotal,
+                             LocalDateTime creeLe, LocalDateTime expireLe, VoyageDto voyage,
+                             String client, String clientEmail, PaiementDto paiement, List<BilletDto> billets) {
 }
