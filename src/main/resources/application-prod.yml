@@ -1,4 +1,4 @@
-# Profil production (SPRING_PROFILES_ACTIVE=prod) : base MySQL sur Amazon RDS.
+SPRING_PROFILES_ACTIVE=prod :
 # Toutes les valeurs sensibles viennent de l'environnement ; aucune valeur par défaut pour les secrets.
 spring:
   datasource:
