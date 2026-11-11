@@ -78,6 +78,13 @@ class ParcoursBilletIT {
                 .andExpect(status().isCreated()));
         assertThat(reservation.get("statut").asText()).isEqualTo("EN_ATTENTE_PAIEMENT");
         assertThat(reservation.get("montantTotal").asInt()).isEqualTo(13000);
+
+        // Les dates partent avec leur fuseau : un navigateur hors du Sénégal ne doit pas voir le délai déjà expiré.
+        String expireLe = reservation.get("expireLe").asText();
+        assertThat(expireLe).endsWith("Z");
+        long resteSecondes = java.time.Duration.between(java.time.Instant.now(), java.time.Instant.parse(expireLe)).toSeconds();
+        assertThat(resteSecondes).isBetween(14 * 60L, 15 * 60L);
+        assertThat(reservation.at("/voyage/dateDepart").asText()).endsWith("Z");
         assertThat(voyageRepository.findById(voyage.getId()).orElseThrow().getPlacesDisponibles()).isEqualTo(1);
 
         // Trop de places demandées
